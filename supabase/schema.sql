@@ -12,16 +12,19 @@ create index if not exists study_sessions_user_created_idx
 
 alter table public.study_sessions enable row level security;
 
+drop policy if exists "Users can read their own study sessions" on public.study_sessions;
 create policy "Users can read their own study sessions"
   on public.study_sessions for select
   to authenticated
   using ((select auth.uid()) = user_id);
 
+drop policy if exists "Users can save their own study sessions" on public.study_sessions;
 create policy "Users can save their own study sessions"
   on public.study_sessions for insert
   to authenticated
   with check ((select auth.uid()) = user_id);
 
+drop policy if exists "Users can delete their own study sessions" on public.study_sessions;
 create policy "Users can delete their own study sessions"
   on public.study_sessions for delete
   to authenticated

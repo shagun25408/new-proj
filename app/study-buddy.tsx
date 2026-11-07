@@ -1,8 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
+import { type FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
 import { getSupabaseClient } from '../lib/supabase';
 
@@ -82,7 +81,6 @@ function formatDate(value: string): string {
 }
 
 export default function StudyBuddy({ page }: { page: Page }) {
-  const pathname = usePathname();
   const [supabase] = useState(getSupabaseClient);
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(Boolean(supabase));
@@ -104,7 +102,8 @@ export default function StudyBuddy({ page }: { page: Page }) {
   const supabaseEnabled = Boolean(supabase);
 
   useEffect(() => {
-    setVoiceSupported(Boolean(window as SpeechWindow && ((window as SpeechWindow).SpeechRecognition || (window as SpeechWindow).webkitSpeechRecognition)));
+    const speechWindow = window as SpeechWindow;
+    setVoiceSupported(Boolean(speechWindow.SpeechRecognition || speechWindow.webkitSpeechRecognition));
     if (!supabase) {
       setSessions(readLocalSessions());
       return;
@@ -147,6 +146,13 @@ export default function StudyBuddy({ page }: { page: Page }) {
       listener.subscription.unsubscribe();
     };
   }, [supabase]);
+
+  useEffect(() => {
+    if (page === 'study') {
+      const prompt = new URLSearchParams(window.location.search).get('prompt');
+      if (prompt) setQuestion(prompt);
+    }
+  }, [page]);
 
   useEffect(() => {
     endOfMessagesRef.current?.scrollIntoView({ behavior: 'smooth' });
