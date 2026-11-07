@@ -110,7 +110,9 @@ export default function StudyBuddy({ page }: { page: Page }) {
     }
 
     let active = true;
+    let loadGeneration = 0;
     const loadUser = async (session: Session | null) => {
+      const generation = ++loadGeneration;
       if (!active) return;
       setUser(session?.user ?? null);
       setAuthLoading(false);
@@ -120,7 +122,7 @@ export default function StudyBuddy({ page }: { page: Page }) {
           .select('id, question, answer, sources, created_at')
           .order('created_at', { ascending: false })
           .limit(100);
-        if (!active) return;
+        if (!active || generation !== loadGeneration) return;
         if (error) {
           setNotice(`Could not load cloud history: ${error.message}`);
           setSessions([]);
@@ -135,6 +137,10 @@ export default function StudyBuddy({ page }: { page: Page }) {
     void supabase.auth.getSession().then(({ data, error }) => {
       if (error) setAuthMessage(error.message);
       void loadUser(data.session);
+    }).catch((error: unknown) => {
+      if (!active) return;
+      setAuthLoading(false);
+      setAuthMessage(error instanceof Error ? error.message : 'Could not check the current sign-in session.');
     });
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
