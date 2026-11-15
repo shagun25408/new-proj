@@ -88,6 +88,7 @@ export default function StudyBuddy({ page }: { page: Page }) {
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(Boolean(supabase));
   const [sessions, setSessions] = useState<StudySession[]>([]);
+  const [carouselIndex, setCarouselIndex] = useState(0);
   const [question, setQuestion] = useState('');
   const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
   const [answerLoading, setAnswerLoading] = useState(false);
@@ -382,7 +383,7 @@ export default function StudyBuddy({ page }: { page: Page }) {
     setSessions((current) => current.filter((item) => item.id !== sessionId));
   };
 
-  const title = page === 'dashboard' ? 'Your learning dashboard' : page === 'study' ? 'Study room' : 'Session history';
+  const title = page === 'dashboard' ? 'Overview' : page === 'study' ? 'Study room' : 'Session history';
   const navItems: Array<{ label: string; href: string; key: Page }> = [
     { label: 'Overview', href: '/', key: 'dashboard' },
     { label: 'Study room', href: '/study', key: 'study' },
@@ -429,10 +430,10 @@ export default function StudyBuddy({ page }: { page: Page }) {
         <div className="content">
           <div className="page-heading">
             <div>
-              <div className="eyebrow">YOUR STUDY SPACE</div>
-              <h1>{title}</h1>
+              <div className="eyebrow">{page === 'dashboard' ? 'YOUR NEXT CHAPTER STARTS HERE' : 'YOUR STUDY SPACE'}</div>
+              <h1>{page === 'dashboard' ? 'Welcome back, learner.' : title}</h1>
               <p className="muted">
-                {page === 'dashboard' && 'A clear view of your questions, recent sessions, and weekly study rhythm.'}
+                {page === 'dashboard' && 'Follow your curiosity. Your AI learning space is ready when you are.'}
                 {page === 'study' && 'Ask your tutor a question by voice or text, and keep the answer for later.'}
                 {page === 'history' && 'Revisit answers from your saved study sessions.'}
               </p>
@@ -444,6 +445,66 @@ export default function StudyBuddy({ page }: { page: Page }) {
 
           {page === 'dashboard' && (
             <>
+              <section className="warp-feature" aria-labelledby="warp-heading">
+                <div className="warp-feature-heading">
+                  <div>
+                    <span className="warp-kicker">A NEW WAY TO EXPLORE</span>
+                    <h2 id="warp-heading">Your learning universe</h2>
+                    <p>Move through your study space. Drag the carousel, use the arrows, or select a card to open it.</p>
+                  </div>
+                  <span className="warp-live"><span /> LIVE EXPERIENCE</span>
+                </div>
+                <div className="warp-carousel-frame">
+                  <WarpCarousel
+                    cards={carouselCards}
+                    index={carouselIndex}
+                    onIndexChange={setCarouselIndex}
+                    onCardClick={(index) => router.push(carouselRoutes[index] ?? '/')}
+                    ariaLabel="StudyBuddy feature carousel"
+                    background="#050505"
+                    interval={5.2}
+                    step={1}
+                    warp={0.88}
+                    className="study-warp-carousel"
+                    style={{ height: '100%', minHeight: 0, aspectRatio: 'auto' }}
+                  />
+                </div>
+                <div className="warp-controls">
+                  <button
+                    className="warp-arrow"
+                    type="button"
+                    aria-label="Previous feature"
+                    onClick={() => setCarouselIndex((index) => (index + carouselCards.length - 1) % carouselCards.length)}
+                  >
+                    ←
+                  </button>
+                  <div className="warp-pagination" aria-label="Carousel position">
+                    {carouselCards.map((card, index) => (
+                      <button
+                        key={card.title}
+                        type="button"
+                        className={`warp-dot ${index === carouselIndex ? 'active' : ''}`}
+                        aria-label={`Show ${card.title.replace('\n', ' ')}`}
+                        aria-current={index === carouselIndex ? 'true' : undefined}
+                        onClick={() => setCarouselIndex(index)}
+                      />
+                    ))}
+                    <span className="warp-index">{String(carouselIndex + 1).padStart(2, '0')} <span>/</span> {String(carouselCards.length).padStart(2, '0')}</span>
+                  </div>
+                  <button
+                    className="warp-arrow"
+                    type="button"
+                    aria-label="Next feature"
+                    onClick={() => setCarouselIndex((index) => (index + 1) % carouselCards.length)}
+                  >
+                    →
+                  </button>
+                  <Link className="warp-open-link" href={carouselRoutes[carouselIndex] ?? '/'}>
+                    Open this space <span aria-hidden="true">↗</span>
+                  </Link>
+                </div>
+              </section>
+
               <section className="stats-grid" aria-label="Study statistics">
                 <article className="stat-card">
                   <span className="stat-icon blue">Q</span><span className="stat-label">Questions saved</span>
@@ -451,7 +512,7 @@ export default function StudyBuddy({ page }: { page: Page }) {
                 </article>
                 <article className="stat-card">
                   <span className="stat-icon green">7</span><span className="stat-label">Active days</span>
-                  <strong>{new Set(sessions.map((session) => new Date(session.created_at).toDateString())).size}</strong><small>Days with a saved question</small>
+                  <strong>{activeDays}</strong><small>Days with a saved question this week</small>
                 </article>
                 <article className="stat-card">
                   <span className="stat-icon pink">↗</span><span className="stat-label">This week</span>
