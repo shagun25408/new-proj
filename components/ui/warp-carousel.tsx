@@ -41,6 +41,8 @@ export interface WarpCarouselProps {
   defaultIndex?: number;
   /** Called when the front card should change: autoplay, drag, click, or arrow keys. */
   onIndexChange?: (index: number) => void;
+  /** Called when the front card itself is clicked without dragging. */
+  onCardClick?: (index: number) => void;
   /** Spin to the next card on a timer. */
   autoplay?: boolean;
   /** Seconds between autoplay spins. Longer intervals only stretch the slow tail of the spin; shorter ones compress the whole curve. */
@@ -996,6 +998,7 @@ export function WarpCarousel({
   index,
   defaultIndex = 0,
   onIndexChange,
+  onCardClick,
   autoplay = true,
   interval = 3.6667,
   step = 2,
@@ -1047,8 +1050,8 @@ export function WarpCarousel({
     visible: true,
     hiddenAt: 0,
   });
-  const props = React.useRef({ onIndexChange, controlled, autoplay, gap, stepN, seconds, reduced, realCount });
-  props.current = { onIndexChange, controlled, autoplay, gap, stepN, seconds, reduced, realCount };
+  const props = React.useRef({ onIndexChange, onCardClick, controlled, autoplay, gap, stepN, seconds, reduced, realCount });
+  props.current = { onIndexChange, onCardClick, controlled, autoplay, gap, stepN, seconds, reduced, realCount };
   const handles = React.useRef<{ kick: () => void; draw: () => void }>({ kick: () => {}, draw: () => {} });
 
   const lastIndex = React.useRef(current);
@@ -1377,6 +1380,7 @@ export function WarpCarousel({
       const u = (e.clientX - r.left - r.width / 2) / Math.min(r.width / 720, r.height / 440);
       if (u > 168) request(lastIndex.current + 1);
       else if (u < -168) request(lastIndex.current - 1);
+      else props.current.onCardClick?.(mod(current, props.current.realCount));
       return;
     }
     if (now - L.lastT > 0.08) L.v = 0;

@@ -1,8 +1,10 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { type FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
+import WarpCarousel, { type WarpCard } from '../components/ui/warp-carousel';
 import { getSupabaseClient } from '../lib/supabase';
 
 type Page = 'dashboard' | 'study' | 'history';
@@ -81,6 +83,7 @@ function formatDate(value: string): string {
 }
 
 export default function StudyBuddy({ page }: { page: Page }) {
+  const router = useRouter();
   const [supabase] = useState(getSupabaseClient);
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(Boolean(supabase));
@@ -180,6 +183,55 @@ export default function StudyBuddy({ page }: { page: Page }) {
     const max = Math.max(1, ...days.map((day) => day.count));
     return days.map((day) => ({ ...day, height: Math.max(5, (day.count / max) * 100) }));
   }, [sessions]);
+  const activeDays = weeklyActivity.filter((day) => day.count > 0).length;
+  const carouselCards = useMemo<WarpCard[]>(
+    () => [
+      {
+        title: 'Your Learning\nJourney',
+        value: String(sessions.length),
+        footer: 'Active learning sessions',
+        detail: 'slider',
+        labels: ['Start', 'Grow'],
+        numeral: ['#38d7ff', '#a7f8ff'],
+        accent: '#5ee5ff',
+        glow: '#04bfff',
+        mesh: ['#03121f', '#052b49', '#075983', '#087fb1', '#092b60', '#02111e'],
+      },
+      {
+        title: 'AI Study\nRoom',
+        value: 'Learn',
+        footer: 'Your intelligent learning companion',
+        detail: 'wave',
+        numeral: ['#ed8cff', '#e4d1ff'],
+        accent: '#f37aff',
+        glow: '#c038ff',
+        mesh: ['#200827', '#4b125c', '#9d27bd', '#531b9a', '#190c39', '#cb3eaa'],
+      },
+      {
+        title: 'Your\nProgress',
+        value: String(sessions.length),
+        footer: 'Saved learning sessions',
+        detail: 'ring',
+        numeral: ['#ff89c8', '#ffd198'],
+        accent: '#ff9bd1',
+        glow: '#ff5798',
+        mesh: ['#250d24', '#621b50', '#a72e6d', '#db5b57', '#70253a', '#301523'],
+      },
+      {
+        title: 'Knowledge\nLibrary',
+        value: 'Explore',
+        footer: 'Your personalized learning space',
+        detail: 'cross',
+        labels: ['Library', 'Q&A', 'Saved'],
+        numeral: ['#7df7c4', '#91eaff'],
+        accent: '#8ef8da',
+        glow: '#34e8b3',
+        mesh: ['#06201c', '#064f46', '#079b80', '#087b91', '#063a55', '#031b27'],
+      },
+    ],
+    [sessions.length],
+  );
+  const carouselRoutes = ['/', '/study', '/history', '/history'];
 
   const saveSession = async (session: StudySession) => {
     if (supabase && user) {
